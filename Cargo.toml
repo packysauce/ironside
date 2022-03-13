@@ -1,0 +1,37 @@
+[package]
+name = "klippy-rs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "klippy_rs"
+crate-type = ["cdylib"]
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+
+[profile.test]
+codegen-units = 1
+
+[dependencies]
+chrono = "0.4.19"
+clap = { version = "3.1.6", features = ["derive"] }
+configparser = "3.0.0"
+crc-any = "2.4.2"
+crossbeam = "0.8.1"
+derive_more = "0.99.17"
+dimensioned = "0.7.0"
+enumflags2 = "0.7.3"
+#pyo3 = { version = "0.16.1", features = ["extension-module"] }
+serde = { version = "1.0.136", features = ["derive"] }
+serial = "0.4.0"
+thiserror = "1.0.30"
+tokio = "1.17.0"
+tokio-util = { version = "0.7.0", features = ["codec"] }
+
+[build-dependencies]
+bindgen = "0.59.2"
+cargo-emit = "0.2.1"
+cc = "1.0.73"

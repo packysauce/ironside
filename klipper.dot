@@ -1,0 +1,30 @@
+digraph G {
+    subgraph clusterArduino {
+        label = "Arduino"
+        compound = true;
+        queue [shape=record label="<f0>...|...|<f1>VLQ"]
+        mcu [shape=box fillcolor=green];
+        steps [label="Stepper Drivers"]
+        X [shape=cylinder]
+        Y [shape=cylinder]
+        Z [shape=cylinder]
+        E [shape=cylinder]
+        mcu -> steps;
+        steps -> {X Y Z E} [arrowhead=curve];
+    }
+    subgraph clusterKlippy {
+        label = "klippy"
+        subgraph clusterQueues {
+            label = "Queues"
+            compound = true;
+            node [shape = tab];
+            qX [label="X"];
+            qY [label="Y"];
+            qZ [label="Z"];
+        }
+        itersolver -> {qX qY qZ}
+        {qX qY qZ} -> mcu_queue
+    }
+    mcu_queue -> queue [label="serial"];
+    queue:f1 -> mcu;
+}
