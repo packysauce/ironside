@@ -11,6 +11,8 @@ mod mcu;
 mod msgblock;
 mod serialqueue;
 
+pub use ffi::command;
+
 // TODO! make the unit system based on a feature?
 //pub type Meter = dimensioned::si::Meter<f32>;
 //pub type MeterPerSecond = dimensioned::si::MeterPerSecond<f32>;
