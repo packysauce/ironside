@@ -1,3 +1,5 @@
+use derive_more::{Deref, From};
+
 #[allow(deref_nullptr)]
 mod generated {
     #![allow(non_upper_case_globals)]
@@ -7,7 +9,21 @@ mod generated {
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
 
-fn decode_int(data: &[u8]) -> u32 {
+/// Newtype around a byte array because the klipper side has a different byte order
+#[derive(PartialEq, Deref, From, Debug)]
+pub struct KlipperVarint(Vec<u8>);
+
+impl<T> PartialEq<T> for KlipperVarint
+where
+    Vec<u8>: PartialEq<T>,
+{
+    fn eq(&self, other: &T) -> bool {
+        self.0.eq(other)
+    }
+}
+
+/// Safe wrapper to Klipper's C version
+pub fn decode_int(data: &[u8]) -> u32 {
     let mut data = data.as_ptr() as *mut u8;
     /// SAFETY: the _pointer_ gets mangled, but not the array underneath
     /// solution? just use a different pointer
@@ -16,7 +32,8 @@ fn decode_int(data: &[u8]) -> u32 {
     }
 }
 
-pub fn encode_int(v: u32) -> Vec<u8> {
+/// Safe wrapper to Klipper's C version
+pub fn encode_int(v: u32) -> KlipperVarint {
     let mut buf = [0x81u8; 5]; // blub
     let mut buf_start = buf.as_mut_ptr();
     let count = unsafe {
@@ -27,7 +44,7 @@ pub fn encode_int(v: u32) -> Vec<u8> {
         );
         buf_end.offset_from(buf_start) as usize
     };
-    buf[..count].into()
+    KlipperVarint(buf[..count].into())
 }
 
 pub const fn encoded_len(value: i32) -> usize {
