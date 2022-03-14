@@ -25,6 +25,7 @@ crossbeam = "0.8.1"
 derive_more = "0.99.17"
 dimensioned = "0.7.0"
 enumflags2 = "0.7.3"
+rand = "0.8.5"
 #pyo3 = { version = "0.16.1", features = ["extension-module"] }
 serde = { version = "1.0.136", features = ["derive"] }
 serial = "0.4.0"
@@ -37,3 +38,6 @@ vlq = "0.5.1"
 bindgen = "0.59.2"
 cargo-emit = "0.2.1"
 cc = "1.0.73"
+
+[dev-dependencies]
+proptest = "1.0.0"
