@@ -1,8 +1,6 @@
 use std::env;
 use std::path::PathBuf;
-
 use bindgen::CargoCallbacks;
-use cargo_emit::rustc_link_lib;
 
 fn main() {
     cc::Build::new()
@@ -19,7 +17,6 @@ fn main() {
         .layout_tests(false)
         .generate()
         .expect("Unable to generate bindings");
-    rustc_link_lib!("commandc");
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindings
