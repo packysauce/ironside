@@ -6,8 +6,8 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "klippy_rs"
-crate-type = ["cdylib"]
+name = "ironside"
+crate-type = ["cdylib", "rlib"]  # rlib for benches
 
 [profile.release]
 codegen-units = 1
@@ -41,4 +41,9 @@ cargo-emit = "0.2.1"
 cc = "1.0.73"
 
 [dev-dependencies]
+criterion = "0.3.5"
 proptest = "1.0.0"
+
+[[bench]]
+name = "ffi_bench"
+harness = false
