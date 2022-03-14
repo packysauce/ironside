@@ -1,5 +1,5 @@
 #[allow(deref_nullptr)]
-mod generated { 
+mod generated {
     #![allow(non_upper_case_globals)]
     #![allow(non_camel_case_types)]
     #![allow(non_snake_case)]
@@ -11,7 +11,9 @@ fn decode_int(data: &[u8]) -> u32 {
     let mut data = data.as_ptr() as *mut u8;
     /// SAFETY: the _pointer_ gets mangled, but not the array underneath
     /// solution? just use a different pointer
-    unsafe { generated::parse_int(&mut data) }
+    unsafe {
+        generated::parse_int(&mut data)
+    }
 }
 
 pub fn encode_int(v: u32) -> Vec<u8> {
@@ -41,12 +43,12 @@ pub const fn encoded_len(value: i32) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::prelude::*;
+    use proptest::num::u32::ANY as ANYu32;
+    use proptest::num::u64::ANY as ANYu64;
     use proptest::prelude::*;
-    use proptest::num::u32::{ANY as ANYu32};
-    use proptest::num::u64::{ANY as ANYu64};
+    use rand::prelude::*;
 
-    proptest!{
+    proptest! {
         #[test]
         fn encode_lengths_match_docs(value in ANYu32) {
             let r = encode_int(value);
