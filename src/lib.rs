@@ -9,6 +9,7 @@ mod ffi;
 mod kinematics;
 mod mcu;
 mod msgblock;
+pub mod proto;
 mod serialqueue;
 
 pub use ffi::command;
