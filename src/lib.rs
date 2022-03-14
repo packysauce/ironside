@@ -17,16 +17,18 @@ mod ffi {
     }
 }
 
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rand::prelude::*;
     use proptest::prelude::*;
-    use proptest::num::u32::ANY;
+    use proptest::num::u32::{ANY as ANYu32};
+    use proptest::num::u64::{ANY as ANYu64};
 
     proptest!{
-
         #[test]
-        fn encode_handles_all_numbers(value in ANY) {
+        fn encode_lengths_match_docs(value in ANYu32) {
             let r = encode_int(value);
             // https://www.klipper3d.org/Protocol.html#variable-length-quantities
             let expected_len = match value as i32 {
@@ -38,18 +40,17 @@ mod tests {
             };
             assert_eq!(expected_len, r.len());
         }
-    }
 
-    /// Check that a number survives the encode/decode round trip
-    #[test]
-    fn test_round_trip() {
-        let mut count = 0;
-        for _ in 0u32..1000 {
-            count += 1;
-            let encode_me = rand::random();
-            let decode_me = encode_int(encode_me);
-            let decoded = decode_int(&decode_me);
-            assert_eq!(encode_me, decoded, "failed on attempt #{}", count);
+        /// Generate 1000 random numbers from any seed and test that they round trip
+        #[test]
+        fn round_trip_subset(seed in ANYu64) {
+            let mut rng = StdRng::seed_from_u64(seed);
+            for _ in 0u32..1000 {
+                let encode_me = rng.gen();
+                let decode_me = encode_int(encode_me);
+                let decoded = decode_int(&decode_me);
+                assert_eq!(encode_me, decoded);
+            }
         }
     }
 
@@ -68,8 +69,7 @@ pub fn decode_int(data: &[u8]) -> u32 {
     let mut copy_of_data = data.to_vec();
     let mut get_mangled = copy_of_data.as_mut_ptr();
     //let out = unsafe { parse_int(data.as_mut_slice() as *mut [u8]) };
-    let out = unsafe { parse_int(&mut get_mangled) };
-    out
+    unsafe { parse_int(&mut get_mangled) }
 }
 
 pub fn encode_int(v: u32) -> Vec<u8> {
