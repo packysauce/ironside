@@ -28,6 +28,16 @@ pub fn encode_int(v: u32) -> Vec<u8> {
     buf[..count].into()
 }
 
+pub const fn encoded_len(value: i32) -> usize {
+    match value {
+        -32..=95 => 1,
+        -4096..=12_287 => 2,
+        -524_288..=1_572_863 => 3,
+        -67_108_864..=201_326_591 => 4,
+        _ => 5,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -41,14 +51,7 @@ mod tests {
         fn encode_lengths_match_docs(value in ANYu32) {
             let r = encode_int(value);
             // https://www.klipper3d.org/Protocol.html#variable-length-quantities
-            let expected_len = match value as i32 {
-                -32 ..= 95 => 1,
-                -4096 ..= 12_287 => 2,
-                -524_288 ..= 1_572_863 => 3,
-                -67_108_864 ..= 201_326_591 => 4,
-                _ => 5,
-            };
-            assert_eq!(expected_len, r.len());
+            assert_eq!(encoded_len(value as i32), r.len());
         }
 
         /// Generate 1000 random numbers from any seed and test that they round trip
