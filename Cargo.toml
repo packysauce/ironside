@@ -34,6 +34,10 @@ thiserror = "1.0.30"
 tokio = "1.17.0"
 tokio-util = { version = "0.7.0", features = ["codec"] }
 vlq-rust = "0.4.0"
+ironside-macros = { path = "./ironside-macros" }
+paste = "1.0.6"
+nom = "7.1.1"
+serde_json = "1.0.79"
 
 [build-dependencies]
 bindgen = "0.59.2"
@@ -42,6 +46,7 @@ cc = "1.0.73"
 
 [dev-dependencies]
 criterion = "0.3.5"
+heck = "0.4.0"
 proptest = "1.0.0"
 
 [[bench]]
