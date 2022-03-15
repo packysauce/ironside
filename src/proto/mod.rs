@@ -1,10 +1,64 @@
 use std::io::Cursor;
 
 use crate::command::encoded_len;
+use crate::ffi::generated;
 
+use derive_more::{Deref, From};
 use vlq_rust::*;
 
+pub type OID = u8;
 pub type Result<T> = std::result::Result<T, std::io::Error>;
+
+pub enum DataType<T> {
+    Const(T),
+    Array(Vec<u8>),
+}
+
+/// Newtype around a byte array because the klipper side has a different byte order
+#[derive(PartialEq, Deref, From, Debug)]
+pub struct KlipperVarint(pub Vec<u8>);
+
+impl<T> PartialEq<T> for KlipperVarint
+where
+    Vec<u8>: PartialEq<T>,
+{
+    fn eq(&self, other: &T) -> bool {
+        self.0.eq(other)
+    }
+}
+
+pub trait KlipperBytes {
+    fn to_klipper_bytes(self) -> KlipperVarint;
+    fn from_klipper_bytes(bytes: &KlipperVarint) -> Self;
+}
+
+impl<T> KlipperBytes for T
+where
+    T: Into<u32> + From<u32>,
+{
+    fn to_klipper_bytes(self) -> KlipperVarint {
+        let s = self.into();
+        let mut buf = [0x81u8; 5]; // blub
+        let mut buf_start = buf.as_mut_ptr();
+        let count = unsafe {
+            let buf_end = generated::encode_int(buf_start, s);
+            assert!(
+                buf_end > buf_start,
+                "encode_int returned a pointer with negative offset"
+            );
+            buf_end.offset_from(buf_start) as usize
+        };
+        KlipperVarint(buf[..count].into())
+    }
+
+    fn from_klipper_bytes(bytes: &KlipperVarint) -> Self {
+        let mut data = bytes.as_ptr() as *mut u8;
+        /// SAFETY: the _pointer_ gets mangled, but not the array underneath
+        /// solution? just use a different pointer
+        let u = unsafe { generated::parse_int(&mut data) };
+        u.into()
+    }
+}
 
 pub trait ToVarintBytes {
     fn to_varint_bytes(&self) -> Result<Vec<u8>>;
