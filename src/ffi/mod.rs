@@ -1,4 +1,10 @@
 pub mod command;
+#[doc(hidden)]
+#[allow(deref_nullptr)]
 pub mod generated {
-    pub use super::command::generated::*;
+    #![allow(non_upper_case_globals)]
+    #![allow(non_camel_case_types)]
+    #![allow(non_snake_case)]
+
+    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }

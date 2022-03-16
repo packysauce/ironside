@@ -1,13 +1,3 @@
-#[doc(hidden)]
-#[allow(deref_nullptr)]
-pub mod generated {
-    #![allow(non_upper_case_globals)]
-    #![allow(non_camel_case_types)]
-    #![allow(non_snake_case)]
-
-    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-}
-
 pub const fn encoded_len(value: i32) -> usize {
     match value {
         -32..=95 => 1,
