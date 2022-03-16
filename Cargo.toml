@@ -38,6 +38,12 @@ ironside-macros = { path = "./ironside-macros" }
 paste = "1.0.6"
 nom = "7.1.1"
 serde_json = "1.0.79"
+syn = { version = "1.0.88", features = ["full"] }
+quote = "1.0.15"
+proc-macro2 = "1.0.36"
+serde-tuple-vec-map = "1.0.0"
+rustfmt = "0.10.0"
+strum = { version = "0.24.0", features = ["derive"] }
 
 [build-dependencies]
 bindgen = "0.59.2"

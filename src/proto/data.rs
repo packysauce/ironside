@@ -2,11 +2,11 @@
 
 use std::collections::HashMap;
 
-use derive_more::{Deref, From};
+use derive_more::Deref;
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote, ToTokens, TokenStreamExt};
-use serde::de::{Error, Expected, Unexpected, Visitor};
+use quote::{quote, ToTokens};
 use serde::{Deserialize, Serialize};
+use strum::EnumString;
 use syn::parse_quote;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -20,7 +20,51 @@ pub struct Dictionary {
 }
 
 /// shitty struct to hold command names for now
-pub struct Command(pub String);
+#[derive(Clone)]
+pub struct Command {
+    /// Name of the struct
+    pub name: String,
+    /// Definition of the struct
+    pub def: String,
+    /// Map of field name to the "type" of field
+    pub fields: HashMap<String, ScanfToken>,
+}
+
+pub trait FromCommandDecl: Sized {
+    type Err;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err>;
+}
+
+#[derive(PartialEq, EnumString, Clone, Copy, Debug)]
+pub enum ScanfToken {
+    #[strum(serialize = "%c")]
+    U8,
+    #[strum(serialize = "%hu")]
+    U16,
+    #[strum(serialize = "%u")]
+    U32,
+    #[strum(serialize = "%hi")]
+    I16,
+    #[strum(serialize = "%i")]
+    I32,
+    #[strum(serialize = "%*s")]
+    Bytes,
+}
+
+impl ToTokens for ScanfToken {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let t = match *self {
+            ScanfToken::U8 => quote! { u8 },
+            ScanfToken::U16 => quote! { u16 },
+            ScanfToken::U32 => quote! { u32 },
+            ScanfToken::I16 => quote! { i16 },
+            ScanfToken::I32 => quote! { i32 },
+            ScanfToken::Bytes => quote! { String },
+        };
+        t.to_tokens(tokens)
+    }
+}
 
 pub type Variant = (String, EnumValue<u8>);
 #[derive(Serialize, Deserialize, Deref, Debug)]
@@ -70,7 +114,7 @@ impl ToTokens for Dictionary {
 
 #[cfg(test)]
 mod tests {
-    use super::Dictionary;
+    use super::*;
 
     const KLIPPER_DICT: &str = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
