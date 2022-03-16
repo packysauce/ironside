@@ -123,6 +123,6 @@ mod tests {
 
     #[test]
     fn test_klipper_dict() {
-        let d: Dictionary = serde_json::from_str(KLIPPER_DICT).unwrap();
+        let _: Dictionary = serde_json::from_str(KLIPPER_DICT).unwrap();
     }
 }

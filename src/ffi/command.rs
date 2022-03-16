@@ -1,7 +1,3 @@
-use derive_more::{Deref, From};
-
-use crate::proto::KlipperVarint;
-
 #[doc(hidden)]
 #[allow(deref_nullptr)]
 pub mod generated {

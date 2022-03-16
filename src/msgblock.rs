@@ -1,6 +1,3 @@
-use crc_any::CRCu16;
-use std::convert::TryFrom;
-
 pub enum Clock {
     Command { minimum: u64, required: u64 },
     Send { sent: f64, received: f64 },
@@ -31,6 +28,8 @@ pub fn msgblock_crc16_ccitt(buf: &[u8]) -> u16 {
 
 #[cfg(test)]
 mod tests {
+    use crc_any::CRCu16;
+
     use super::*;
     #[test]
     fn test_msgblocks() {

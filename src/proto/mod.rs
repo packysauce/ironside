@@ -1,6 +1,5 @@
 use std::io::Cursor;
 
-use crate::command::encoded_len;
 use crate::ffi::generated;
 
 use derive_more::{Deref, From};
@@ -42,7 +41,7 @@ where
     fn to_klipper_bytes(self) -> KlipperVarint {
         let s = self.into();
         let mut buf = [0x81u8; 5]; // blub
-        let mut buf_start = buf.as_mut_ptr();
+        let buf_start = buf.as_mut_ptr();
         let count = unsafe {
             let buf_end = generated::encode_int(buf_start, s);
             assert!(
@@ -56,8 +55,8 @@ where
 
     fn from_klipper_bytes(bytes: &KlipperVarint) -> Self {
         let mut data = bytes.as_ptr() as *mut u8;
-        /// SAFETY: the _pointer_ gets mangled, but not the array underneath
-        /// solution? just use a different pointer
+        // SAFETY: the _pointer_ gets mangled, but not the array underneath
+        // solution? just use a different pointer
         let u = unsafe { generated::parse_int(&mut data) };
         u.into()
     }
@@ -95,7 +94,6 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use proptest::num::u32::ANY as ANYu32;
     use proptest::num::u64::ANY as ANYu64;
     use proptest::prelude::*;
     use rand::prelude::*;
@@ -107,7 +105,7 @@ mod tests {
             let mut rng = StdRng::seed_from_u64(seed);
             for _ in 0u32..1000 {
                 let encode_me: u32 = rng.gen();
-                let mut decode_me = encode_me.to_varint_bytes().unwrap();
+                let decode_me = encode_me.to_varint_bytes().unwrap();
                 let decoded = u32::from_varint_bytes(&decode_me).unwrap();
                 assert_eq!(encode_me, decoded);
             }

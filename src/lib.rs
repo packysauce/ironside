@@ -1,10 +1,7 @@
-#![allow(unused)]
-
 use std::fmt::Display;
 use std::marker::PhantomData;
 
 mod cli;
-mod configfile;
 mod ffi;
 mod kinematics;
 mod mcu;
