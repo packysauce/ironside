@@ -1,10 +1,11 @@
+use bindgen::CargoCallbacks;
 use std::env;
 use std::path::PathBuf;
-use bindgen::CargoCallbacks;
 
 fn main() {
+    let sources = ["klipper/klippy/chelper/msgblock.c", "klipper/src/command.c"];
     cc::Build::new()
-        .files(&["klipper/src/command.c"])
+        .files(&sources)
         .include("klipper/src")
         .include("klipper/out")
         .include(".")
