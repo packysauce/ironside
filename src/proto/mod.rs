@@ -6,6 +6,7 @@ use crate::ffi::generated;
 use derive_more::{Deref, From};
 use vlq_rust::*;
 
+pub mod command;
 pub mod data;
 
 pub type OID = u8;
