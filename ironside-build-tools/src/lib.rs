@@ -11,23 +11,12 @@ use syn::parse_quote;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Dictionary {
-    build_versions: String,
-    version: String,
+    pub build_versions: String,
+    pub version: String,
     commands: CommandDefs,
     responses: ResponseDefs,
     #[serde(with = "tuple_vec_map", rename = "enumerations")]
     enums: Vec<(String, Variants)>,
-}
-
-/// shitty struct to hold command names for now
-#[derive(Clone)]
-pub struct Command {
-    /// Name of the struct
-    pub name: String,
-    /// Definition of the struct
-    pub def: String,
-    /// Map of field name to the "type" of field
-    pub fields: HashMap<String, ScanfToken>,
 }
 
 pub trait FromCommandDecl: Sized {
@@ -37,7 +26,7 @@ pub trait FromCommandDecl: Sized {
 }
 
 #[derive(PartialEq, EnumString, Clone, Copy, Debug)]
-pub enum ScanfToken {
+enum ScanfToken {
     #[strum(serialize = "%c")]
     U8,
     #[strum(serialize = "%hu")]
@@ -66,26 +55,25 @@ impl ToTokens for ScanfToken {
     }
 }
 
-pub type Variant = (String, EnumValue<u8>);
 #[derive(Serialize, Deserialize, Deref, Debug)]
 #[serde(transparent)]
-pub struct CommandDefs(HashMap<String, u8>);
+struct CommandDefs(HashMap<String, u8>);
 
 #[derive(Serialize, Deserialize, Deref, Debug)]
 #[serde(transparent)]
-pub struct ResponseDefs(HashMap<String, u8>);
+struct ResponseDefs(HashMap<String, u8>);
 
 #[derive(Serialize, Deserialize, Debug)]
 struct EnumDefs(Vec<String>);
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(transparent)]
-pub struct Variants(#[serde(with = "tuple_vec_map")] Vec<(String, EnumValue<u8>)>);
+struct Variants(#[serde(with = "tuple_vec_map")] Vec<(String, EnumValue<u8>)>);
 
 /// Store either a constant value or a range of values
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(untagged)]
-pub enum EnumValue<T> {
+enum EnumValue<T> {
     Static(T),
     Ranged(T, T),
 }
@@ -96,15 +84,15 @@ impl ToTokens for Dictionary {
             self.commands.iter().map(|(x, y)| (x.clone(), y)).unzip();
 
         let t: syn::ItemImpl = parse_quote! {
-            impl TryFrom<u8> for Command {
-                type Error = ();
+            impl ::std::convert::TryFrom<u8> for crate::proto::command::Command {
+                type Error = crate::proto::command::CommandParseError;
 
                 fn try_from(value: u8) -> Result<Self, Self::Error> {
                     let out = match value {
                         #(#string_ids => #scanf_strings),*,
-                        _ => return Err(()),
+                        other => return Err(Self::Error::NoSuchId(other)),
                     };
-                    Ok(out)
+                    Self::from_str(out)
                 }
             }
         };
