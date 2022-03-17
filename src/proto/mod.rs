@@ -5,8 +5,6 @@ use crate::ffi::generated;
 use derive_more::{Deref, From};
 use vlq_rust::*;
 
-pub mod command;
-
 pub type OID = u8;
 pub type Result<T> = std::result::Result<T, std::io::Error>;
 

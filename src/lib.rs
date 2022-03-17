@@ -2,6 +2,7 @@ use std::fmt::Display;
 use std::marker::PhantomData;
 
 mod cli;
+mod data;
 mod ffi;
 mod kinematics;
 mod mcu;
