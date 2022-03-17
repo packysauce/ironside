@@ -10,7 +10,7 @@ fn main() {
         .include("klipper/out")
         .include(".")
         .shared_flag(true)
-        .compile("commandc");
+        .compile("libklipper");
 
     let bindings = bindgen::builder()
         .header("wrapper.h")
