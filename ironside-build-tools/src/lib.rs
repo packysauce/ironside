@@ -19,6 +19,12 @@ pub struct Dictionary {
     enums: Vec<(String, Variants)>,
 }
 
+impl Dictionary {
+    pub fn to_token_stream(&self) -> TokenStream {
+        ToTokens::to_token_stream(&self)
+    }
+}
+
 pub trait FromCommandDecl: Sized {
     type Err;
 
@@ -26,7 +32,7 @@ pub trait FromCommandDecl: Sized {
 }
 
 #[derive(PartialEq, EnumString, Clone, Copy, Debug)]
-enum ScanfToken {
+pub enum EnumType {
     #[strum(serialize = "%c")]
     U8,
     #[strum(serialize = "%hu")]
@@ -41,15 +47,15 @@ enum ScanfToken {
     Bytes,
 }
 
-impl ToTokens for ScanfToken {
+impl ToTokens for EnumType {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let t = match *self {
-            ScanfToken::U8 => quote! { u8 },
-            ScanfToken::U16 => quote! { u16 },
-            ScanfToken::U32 => quote! { u32 },
-            ScanfToken::I16 => quote! { i16 },
-            ScanfToken::I32 => quote! { i32 },
-            ScanfToken::Bytes => quote! { String },
+            EnumType::U8 => quote! { u8 },
+            EnumType::U16 => quote! { u16 },
+            EnumType::U32 => quote! { u32 },
+            EnumType::I16 => quote! { i16 },
+            EnumType::I32 => quote! { i32 },
+            EnumType::Bytes => quote! { String },
         };
         t.to_tokens(tokens)
     }
