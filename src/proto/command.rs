@@ -1,6 +1,17 @@
-use super::data::{Command, FromCommandDecl, ScanfToken};
+use ironside_build_tools::{EnumType, FromCommandDecl};
 use std::collections::HashMap;
 use std::str::FromStr;
+
+/// shitty struct to hold command names for now
+#[derive(Clone)]
+pub struct Command {
+    /// Name of the struct
+    pub name: String,
+    /// Definition of the struct
+    pub def: String,
+    /// Map of field name to the "type" of field
+    pub fields: HashMap<String, EnumType>,
+}
 
 #[derive(thiserror::Error, Debug)]
 pub enum CommandParseError {
@@ -34,7 +45,7 @@ impl FromCommandDecl for Command {
             let ty = args
                 .next()
                 .ok_or(CommandParseError::MissingScanf)
-                .and_then(|s| Ok(ScanfToken::from_str(s)?))
+                .and_then(|s| Ok(EnumType::from_str(s)?))
                 .map_err(CommandParseError::from)?;
             fields.insert(field_name.to_string(), ty);
         }
@@ -42,6 +53,9 @@ impl FromCommandDecl for Command {
     }
 }
 
+include!(concat!(env!("OUT_DIR"), "/command_gen.rs"));
+
+/*
 impl TryFrom<u8> for Command {
     type Error = CommandParseError;
     fn try_from(value: u8) -> Result<Self, Self::Error> {
@@ -120,6 +134,7 @@ impl TryFrom<u8> for Command {
         Command::from_str(out)
     }
 }
+*/
 
 #[cfg(test)]
 mod tests {
@@ -130,12 +145,12 @@ mod tests {
         let s = "config_st7920 oid=%c cs_pin=%u sclk_pin=%u sid_pin=%u sync_delay_ticks=%u cmd_delay_ticks=%u";
         let command = Command::from_str(s).unwrap();
         let fields = [
-            ("oid", ScanfToken::U8),
-            ("cs_pin", ScanfToken::U32),
-            ("sclk_pin", ScanfToken::U32),
-            ("sid_pin", ScanfToken::U32),
-            ("sync_delay_ticks", ScanfToken::U32),
-            ("cmd_delay_ticks", ScanfToken::U32),
+            ("oid", EnumType::U8),
+            ("cs_pin", EnumType::U32),
+            ("sclk_pin", EnumType::U32),
+            ("sid_pin", EnumType::U32),
+            ("sync_delay_ticks", EnumType::U32),
+            ("cmd_delay_ticks", EnumType::U32),
         ]
         .iter()
         .map(|(s, t)| (s.to_string(), *t))
