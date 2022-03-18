@@ -195,7 +195,12 @@ impl ToTokens for Dictionary {
         for (name, variants) in self.enums.iter() {
             // spit out just the first part...
             let ident = format_ident!("{}", heck::AsUpperCamelCase(name).to_string());
-            let t = quote! { pub enum #ident };
+            let t = quote! {
+                #[derive(::strum::EnumString,::strum::FromRepr)]
+                #[derive(Debug,Copy,Clone,PartialEq)]
+                #[repr(C)]
+                pub enum #ident
+            };
             t.to_tokens(tokens);
             // this tokenstream holds all the enum's variants
             let mut inner = TokenStream::new();
