@@ -45,6 +45,7 @@ serde-tuple-vec-map = "1.0.0"
 rustfmt = "0.10.0"
 strum = { version = "0.24.0", features = ["derive"] }
 ironside-build-tools = { path = "ironside-build-tools" }
+heck = "0.4.0"
 
 [build-dependencies]
 bindgen = "0.59.2"
