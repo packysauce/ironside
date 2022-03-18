@@ -1,19 +1,23 @@
 use bindgen::CargoCallbacks;
 use ironside_build_tools::Dictionary;
 use std::env;
-use std::fs::OpenOptions;
-use std::io::Write;
+use std::fs::{File, OpenOptions};
+use std::io::{BufReader, Write};
 use std::path::PathBuf;
 
-const KLIPPER_DICT: &str = include_str!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/klipper/out/klipper.dict"
-));
-
 fn main() {
+    let dict_path = [env!("CARGO_MANIFEST_DIR"), "klipper", "out", "klipper.dict"]
+        .iter()
+        .collect::<PathBuf>();
+    cargo_emit::rerun_if_changed!(dict_path.to_string_lossy());
+
+    let dict_reader = File::open(dict_path)
+        .map(BufReader::new)
+        .expect("failed to reader klipper.dict");
+
     // Generate the commands from the klipper data dictionary
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let d: Dictionary = serde_json::from_str(KLIPPER_DICT).unwrap();
+    let d: Dictionary = serde_json::from_reader(dict_reader).expect("failed to parse klipper.dict");
     OpenOptions::new()
         .create(true)
         .truncate(true)
@@ -40,8 +44,7 @@ fn main() {
         .generate()
         .expect("Unable to generate bindings");
 
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindings
-        .write_to_file(out_path.join("bindings.rs"))
+        .write_to_file(out_dir.join("bindings.rs"))
         .expect("Couldn't write bindings")
 }
