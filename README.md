@@ -42,5 +42,6 @@ Me. Perhaps any other 3d printing rustaceans?
 # Objectives
 Clarity above all. [Code runs on people](https://rachelbythebay.com/w/2021/09/05/clever/)
 - I like to turn off my inlay hints every once in a while, yaknow? see how the other side lives
+
 Encourage experimentation in Klipper through safe APIs and testing
 - cargo test, cargo bench, examples, and binaries oh my!
