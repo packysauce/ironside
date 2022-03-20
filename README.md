@@ -12,7 +12,7 @@ cd ironside
 git submodule update --init
 cd klipper
 ```
-[go build klipper](klipper/blob/master/docs/Installation.md#building-and-flashing-the-micro-controller)
+[go build klipper](klipper/docs/Installation.md#building-and-flashing-the-micro-controller)
 ```
 cargo test 
 ```
