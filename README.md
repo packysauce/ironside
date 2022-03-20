@@ -3,12 +3,19 @@
 
 # Requirements
 - [Rust](https://www.rust-lang.org/learn/get-started)
-
+- https://xpack.github.io/qemu-arm/ at some point
 # Dev Setup
-Once you've cloned the repo
+TL; DR - 
 ```sh
- git submodule update --init
+git clone https://github.com/packysauce/ironside
+cd ironside
+git submodule update --init
+cd klipper
+[go build klipper](klipper/blob/master/docs/Installation.md#building-and-flashing-the-micro-controller)
+cargo test 
 ```
+
+If that goes well, congrats you're set up
 
 # Overall, like, vibe, man
 I pretty much only like stuff if it's exciting.
@@ -42,6 +49,6 @@ Me. Perhaps any other 3d printing rustaceans?
 # Objectives
 Clarity above all. [Code runs on people](https://rachelbythebay.com/w/2021/09/05/clever/)
 - I like to turn off my inlay hints every once in a while, yaknow? see how the other side lives
-
 Encourage experimentation in Klipper through safe APIs and testing
 - cargo test, cargo bench, examples, and binaries oh my!
+
