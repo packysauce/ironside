@@ -21,7 +21,7 @@ pub fn klipper_ffi_crc(buf: &[u8]) -> u16 {
             buf.as_ptr() as *mut u8,
             buf.len()
                 .try_into()
-                .expect("u8 overlfow in klipper_ffi_crc"),
+                .expect("u8 overflow in klipper_ffi_crc"),
         )
     }
 }

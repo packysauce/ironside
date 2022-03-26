@@ -7,6 +7,8 @@ mod ffi;
 mod kinematics;
 mod mcu;
 mod msgblock;
+#[cfg(test)]
+mod testutils;
 pub mod proto;
 //mod serialqueue;
 

@@ -46,6 +46,7 @@ rustfmt = "0.10.0"
 strum = { version = "0.24.0", features = ["derive"] }
 ironside-build-tools = { path = "ironside-build-tools" }
 heck = "0.4.0"
+hexdump = "0.1.1"
 
 [build-dependencies]
 bindgen = "0.59.2"
