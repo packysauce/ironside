@@ -1,4 +1,3 @@
-pub mod command;
 #[doc(hidden)]
 #[allow(deref_nullptr)]
 pub mod generated {
