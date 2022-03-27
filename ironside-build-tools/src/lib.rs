@@ -174,8 +174,26 @@ impl EnumValue<u8> {
 
 impl ToTokens for Dictionary {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let (scanf_strings, string_ids): (Vec<String>, Vec<u8>) =
-            self.commands.iter().map(|(x, y)| (x.clone(), y)).unzip();
+        let (scanf_strings, string_ids): (Vec<&String>, Vec<u8>) = self.commands.iter().unzip();
+
+        for (scanf, str_id) in self.commands.iter() {
+            let cmd = Command::from_str(scanf).expect("invalid scanf string");
+            let cmd_name = Ident::new(
+                &::heck::AsPascalCase(cmd.name.as_str()).to_string(),
+                Span::call_site(),
+            );
+            let (field, ty): (Vec<Ident>, Vec<EnumType>) = cmd
+                .fields
+                .iter()
+                .map(|(f, t)| (Ident::new(f, Span::call_site()), t))
+                .unzip();
+            let t = quote! {
+                pub struct #cmd_name {
+                    #(#field: #ty,)*
+                }
+            };
+            t.to_tokens(tokens);
+        }
 
         // Cheat, use quote to generate the code all hygenic-like
         let t: syn::ItemImpl = parse_quote! {
