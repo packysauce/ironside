@@ -34,18 +34,6 @@ mod tests {
 
     use super::*;
 
-    use std::convert::TryInto;
-
-    fn read_le_u16(input: &[u8]) -> u16 {
-        let (int_bytes, rest) = input.split_at(std::mem::size_of::<u16>());
-        u16::from_le_bytes(int_bytes.try_into().unwrap())
-    }
-
-    fn read_be_u16(input: &[u8]) -> u16 {
-        let (int_bytes, rest) = input.split_at(std::mem::size_of::<u16>());
-        u16::from_be_bytes(int_bytes.try_into().unwrap())
-    }
-
     /// Just fiddle with the simulator to check it works
     #[test]
     fn test_handshake() {
@@ -61,21 +49,20 @@ mod tests {
 
             reader.read_exact(&mut buf[1..total_len]).unwrap();
             hexdump(&buf[..total_len]);
-            let payload_len = total_len - 3;
-            let (packet, trailer) = buf[..].split_at(payload_len);
-            // the seq is the low 4 bytes...
-            let seq = packet[1] & 0xF;
-            // and the high is reserved
-            let reserved = packet[1] >> 4;
-            let crc = if let [crc1, crc2, 0x7e, ..] = *trailer {
-                u16::from_be_bytes([crc1, crc2])
+            let (crc, payload) = if let [
+                payload @ ..,
+                crc1,
+                crc2,
+                0x7e
+            ] = &buf[..total_len] {
+                let crc = u16::from_be_bytes([*crc1, *crc2]);
+                (crc, payload)
             } else {
                 panic!("invalid trailer!")
             };
-            assert_eq!(trailer[2], 0x7e, "sync byte incorrect");
-            assert_eq!(packet[1] & 0xF0, 0x10, "Expected a seq of 0 and magic of 0x10");
-            let k_crc = klipper_ffi_crc(packet);
-            let rust_crc = klipper_crc(packet);
+            assert_eq!(payload[1] & 0xF0, 0x10, "Expected a seq of 0 and magic of 0x10");
+            let k_crc = klipper_ffi_crc(payload);
+            let rust_crc = klipper_crc(payload);
             assert_eq!(k_crc, crc);
             assert_eq!(k_crc, rust_crc);
         });
