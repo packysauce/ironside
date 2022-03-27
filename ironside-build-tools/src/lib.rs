@@ -4,7 +4,8 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use derive_more::Deref;
-use proc_macro2::{Literal, TokenStream};
+use indexmap::IndexMap;
+use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::{format_ident, quote, ToTokens};
 use serde::{Deserialize, Serialize};
 use strum::EnumString;
@@ -30,7 +31,7 @@ pub struct Command {
     /// Definition of the struct
     pub def: String,
     /// Map of field name to the "type" of field
-    pub fields: HashMap<String, EnumType>,
+    pub fields: IndexMap<String, EnumType>,
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -63,7 +64,8 @@ impl FromStr for Command {
             .ok_or(CommandParseError::MissingIdent)?
             .into();
 
-        let mut fields = HashMap::new();
+            
+        let mut fields = IndexMap::new();
         for arg_string in split_iter {
             // strings of the form k=%v
             // where k is a field and %v is a scanf literal
@@ -206,7 +208,7 @@ impl ToTokens for Dictionary {
             let mut inner = TokenStream::new();
             for (prefix_source, value) in variants.iter() {
                 let prefix = if prefix_source.ends_with('0') {
-                    // TODO! not specific enough, needs to end with _one_ 0
+                    // TODO! not specific enough, needs to end with _a single_ 0
                     prefix_source
                         .trim_end_matches(|c: char| c.is_ascii_digit())
                         .to_owned()
