@@ -18,6 +18,7 @@ pub struct Dictionary {
     pub build_versions: String,
     pub version: String,
     commands: CommandDefs,
+    config: ConfigDefs,
     responses: ResponseDefs,
     #[serde(rename = "enumerations")]
     enums: EnumDefs,
@@ -112,13 +113,26 @@ impl ToTokens for EnumType {
     }
 }
 
+/// A 'message' type that is generated via scanf string in the klipper source
 #[derive(Serialize, Deserialize, Deref, Debug)]
 #[serde(transparent)]
-struct CommandDefs(HashMap<String, u8>);
+struct MessageDef(HashMap<String, u8>);
 
+/// A newtype `MessageDef` for a `Command`, from DECL_COMMAND
 #[derive(Serialize, Deserialize, Deref, Debug)]
 #[serde(transparent)]
-struct ResponseDefs(HashMap<String, u8>);
+struct CommandDefs(MessageDef);
+
+/// The DECL_CONSTANT definitions
+#[derive(Serialize, Deserialize, Deref, Debug)]
+#[serde(transparent)]
+struct ConfigDefs(HashMap<String, u32>);
+
+/// A newtype `MessageDef` for a `Response`, which is a message destined for
+/// the host, from the mcu, typically in response to a command
+#[derive(Serialize, Deserialize, Deref, Debug)]
+#[serde(transparent)]
+struct ResponseDefs(MessageDef);
 
 #[derive(Serialize, Deserialize, Debug)]
 struct EnumDefs(
@@ -128,7 +142,10 @@ struct EnumDefs(
 
 #[derive(Deref, Serialize, Deserialize, Debug)]
 #[serde(transparent)]
-struct Variants(#[serde(with = "tuple_vec_map")] Vec<(String, EnumValue<u8>)>);
+struct Variants(
+    #[serde(with = "tuple_vec_map")]
+    Vec<(String, EnumValue<u8>)>
+);
 
 /// Store either a constant value or a range of values
 #[derive(Serialize, Deserialize, Debug)]
@@ -179,6 +196,13 @@ impl ToTokens for CommandDefs {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let (scanf_strings, string_ids): (Vec<&String>, Vec<u8>) = self.iter().unzip();
 
+        let outer = quote!{
+            #[derive(::strum::EnumString,::strum::FromRepr)]
+            #[derive(Debug)]
+            pub enum Commands
+        };
+        outer.to_tokens(tokens);
+        let mut enum_body = TokenStream::default();
         for (scanf, str_id) in self.iter() {
             let cmd = Command::from_str(scanf).expect("invalid scanf string");
             let cmd_name = Ident::new(
@@ -191,12 +215,13 @@ impl ToTokens for CommandDefs {
                 .map(|(f, t)| (Ident::new(f, Span::call_site()), t))
                 .unzip();
             let t = quote! {
-                pub struct #cmd_name {
+                #cmd_name {
                     #(#field: #ty,)*
-                }
+                },
             };
-            t.to_tokens(tokens);
+            t.to_tokens(&mut enum_body);
         }
+        Brace::default().surround(tokens, |x| enum_body.to_tokens(x));
 
         // Cheat, use quote to generate the code all hygenic-like
         let t: syn::ItemImpl = parse_quote! {
@@ -213,6 +238,12 @@ impl ToTokens for CommandDefs {
             }
         };
         t.to_tokens(tokens);
+    }
+}
+
+impl ToTokens for ResponseDefs {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+
     }
 }
 
@@ -254,6 +285,7 @@ impl ToTokens for Dictionary {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         self.commands.to_tokens(tokens);
         self.enums.to_tokens(tokens);
+        self.responses.to_tokens(tokens);
     }
 }
 
