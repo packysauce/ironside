@@ -19,8 +19,8 @@ pub struct Dictionary {
     pub version: String,
     commands: CommandDefs,
     responses: ResponseDefs,
-    #[serde(with = "tuple_vec_map", rename = "enumerations")]
-    enums: Vec<(String, Variants)>,
+    #[serde(rename = "enumerations")]
+    enums: EnumDefs,
 }
 
 /// shitty struct to hold command names for now
@@ -121,7 +121,10 @@ struct CommandDefs(HashMap<String, u8>);
 struct ResponseDefs(HashMap<String, u8>);
 
 #[derive(Serialize, Deserialize, Debug)]
-struct EnumDefs(Vec<String>);
+struct EnumDefs(
+    #[serde(with = "tuple_vec_map")]
+    Vec<(String, Variants)>
+);
 
 #[derive(Deref, Serialize, Deserialize, Debug)]
 #[serde(transparent)]
@@ -172,11 +175,11 @@ impl EnumValue<u8> {
     }
 }
 
-impl ToTokens for Dictionary {
+impl ToTokens for CommandDefs {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let (scanf_strings, string_ids): (Vec<&String>, Vec<u8>) = self.commands.iter().unzip();
+        let (scanf_strings, string_ids): (Vec<&String>, Vec<u8>) = self.iter().unzip();
 
-        for (scanf, str_id) in self.commands.iter() {
+        for (scanf, str_id) in self.iter() {
             let cmd = Command::from_str(scanf).expect("invalid scanf string");
             let cmd_name = Ident::new(
                 &::heck::AsPascalCase(cmd.name.as_str()).to_string(),
@@ -210,9 +213,13 @@ impl ToTokens for Dictionary {
             }
         };
         t.to_tokens(tokens);
+    }
+}
 
+impl ToTokens for EnumDefs {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         // now do the enums!
-        for (name, variants) in self.enums.iter() {
+        for (name, variants) in self.0.iter() {
             // spit out just the first part...
             let ident = format_ident!("{}", heck::AsUpperCamelCase(name).to_string());
             let t = quote! {
@@ -240,6 +247,13 @@ impl ToTokens for Dictionary {
             b.surround(tokens, |x| inner.to_tokens(x));
             // ...then attach it back to the rest
         }
+    }
+}
+
+impl ToTokens for Dictionary {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        self.commands.to_tokens(tokens);
+        self.enums.to_tokens(tokens);
     }
 }
 
