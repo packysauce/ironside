@@ -1,3 +1,12 @@
+/*!
+ * Klipper serialization format
+ * Need the klipper.dict to generate a "Deserializer" because it has the
+ * IDs of commands and responses. Then that can pull out the proper enums
+ * and such. Shouldn't need a Deserialize impl, just a Deserializer
+ */
+
+
+
 use crossbeam::channel::{unbounded, Receiver, Sender};
 use paste::paste;
 use serde::ser::{
