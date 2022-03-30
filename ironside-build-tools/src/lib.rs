@@ -41,8 +41,12 @@ pub enum CommandParseError {
     MissingIdent,
     #[error("Expected a scanf token")]
     MissingScanf,
-    #[error("Invalid scanf literal")]
-    InvalidLiteral(#[from] ::strum::ParseError),
+    #[error("Invalid scanf literal `{what}`")]
+    InvalidLiteral {
+        what: String,
+        #[source]
+        inner: ::strum::ParseError,
+    },
     #[error("No such id: {0}")]
     NoSuchId(u8),
 }
@@ -65,18 +69,19 @@ impl FromStr for Command {
             .ok_or(CommandParseError::MissingIdent)?
             .into();
 
-            
         let mut fields = IndexMap::new();
         for arg_string in split_iter {
             // strings of the form k=%v
             // where k is a field and %v is a scanf literal
             let mut args = arg_string.splitn(2, '=');
             let field_name = args.next().ok_or(CommandParseError::MissingIdent)?;
-            let ty = args
-                .next()
-                .ok_or(CommandParseError::MissingScanf)
-                .and_then(|s| Ok(EnumType::from_str(s)?))
-                .map_err(CommandParseError::from)?;
+            let ty_name = args.next().ok_or(CommandParseError::MissingScanf)?;
+
+            let ty =
+                EnumType::from_str(ty_name).map_err(|e| CommandParseError::InvalidLiteral {
+                    what: ty_name.to_string(),
+                    inner: e,
+                })?;
             fields.insert(field_name.to_string(), ty);
         }
         Ok(Self { name, def, fields })
@@ -95,7 +100,7 @@ pub enum EnumType {
     I16,
     #[strum(serialize = "%i")]
     I32,
-    #[strum(serialize = "%*s")]
+    #[strum(serialize = "%s", serialize = "%*s", serialize = "%.*s")]
     Bytes,
 }
 
@@ -135,17 +140,11 @@ struct ConfigDefs(HashMap<String, u32>);
 struct ResponseDefs(MessageDef);
 
 #[derive(Serialize, Deserialize, Debug)]
-struct EnumDefs(
-    #[serde(with = "tuple_vec_map")]
-    Vec<(String, Variants)>
-);
+struct EnumDefs(#[serde(with = "tuple_vec_map")] Vec<(String, Variants)>);
 
 #[derive(Deref, Serialize, Deserialize, Debug)]
 #[serde(transparent)]
-struct Variants(
-    #[serde(with = "tuple_vec_map")]
-    Vec<(String, EnumValue<u8>)>
-);
+struct Variants(#[serde(with = "tuple_vec_map")] Vec<(String, EnumValue<u8>)>);
 
 /// Store either a constant value or a range of values
 #[derive(Serialize, Deserialize, Debug)]
@@ -192,17 +191,18 @@ impl EnumValue<u8> {
     }
 }
 
-impl ToTokens for CommandDefs {
-    fn to_tokens(&self, tokens: &mut TokenStream) {
-        let (scanf_strings, string_ids): (Vec<&String>, Vec<u8>) = self.iter().unzip();
-
-        let outer = quote!{
-            #[derive(::strum::EnumString,::strum::FromRepr)]
+impl MessageDef {
+    fn to_tokens(&self, enum_name: &str, struct_name: &str, tokens: &mut TokenStream) {
+        let struct_name = Ident::new(struct_name, Span::call_site());
+        let enum_name = Ident::new(enum_name, Span::call_site());
+        let outer = quote! {
+            #[derive(::nom::Nom, ::strum::EnumString,::strum::FromRepr)]
             #[derive(Debug)]
-            pub enum Commands
+            pub enum #enum_name
         };
         outer.to_tokens(tokens);
         let mut enum_body = TokenStream::default();
+        let mut impl_body = TokenStream::default();
         for (scanf, str_id) in self.iter() {
             let cmd = Command::from_str(scanf).expect("invalid scanf string");
             let cmd_name = Ident::new(
@@ -214,18 +214,29 @@ impl ToTokens for CommandDefs {
                 .iter()
                 .map(|(f, t)| (Ident::new(f, Span::call_site()), t))
                 .unzip();
-            let t = quote! {
+            let variant = quote! {
+                #[strum(serialize = #scanf)]
                 #cmd_name {
                     #(#field: #ty,)*
                 },
             };
-            t.to_tokens(&mut enum_body);
+            variant.to_tokens(&mut enum_body);
+            let cmd_id = Literal::u8_suffixed(*str_id);
+            let match_arm = quote! {
+                [#cmd_id, buf @ ..] => {
+                    Self::#cmd_name {
+
+                    }
+                },
+            };
+            match_arm.to_tokens(&mut impl_body);
         }
         Brace::default().surround(tokens, |x| enum_body.to_tokens(x));
 
+        let (scanf_strings, string_ids): (Vec<&String>, Vec<u8>) = self.iter().unzip();
         // Cheat, use quote to generate the code all hygenic-like
         let t: syn::ItemImpl = parse_quote! {
-            impl ::std::convert::TryFrom<u8> for crate::data::Command {
+            impl ::std::convert::TryFrom<u8> for crate::data::#struct_name {
                 type Error = crate::data::CommandParseError;
 
                 fn try_from(value: u8) -> Result<Self, Self::Error> {
@@ -241,9 +252,15 @@ impl ToTokens for CommandDefs {
     }
 }
 
+impl ToTokens for CommandDefs {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        self.0.to_tokens("Commands", "Command", tokens)
+    }
+}
+
 impl ToTokens for ResponseDefs {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-
+        self.0.to_tokens("Responses", "Response", tokens)
     }
 }
 
